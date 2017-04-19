@@ -3,9 +3,6 @@
 solve(Start,Soln) :- f_function(Start,0,F),
                      search([Start#0#F#[]],S),
                      reverse(S,Soln).                              
-
-f_function(State,D,F) :- h_function(State,H),
-                         F is D + H.
 				
 search([State#_#_#Soln | _], Soln) :- goal(State).
 search([B|R],S) :- expand(B, Children),
@@ -67,9 +64,9 @@ move(P,C,up) :-  up(P,C).
 move(P,C,right) :-  right(P,C).
 move(P,C,down) :-  down(P,C).
 
-h_function(Puzz,H) :- p_fcn(Puzz,P),
-                      s_fcn(Puzz,S),
-                      H is P + 3*S.
+f_function(State,D,F) :- h_function(State,H), F is D + H.
+
+h_function(Puzz,H) :- p_fcn(Puzz,P), s_fcn(Puzz,S), H is P + 3*S.
 
 p_fcn(A/B/C/D/E/F/G/H/I, P) :-
      a(A,Pa), b(B,Pb), c(C,Pc),

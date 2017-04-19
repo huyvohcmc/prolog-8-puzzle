@@ -136,7 +136,6 @@ stepBestFS(N, MaxStep, false) :- N >= MaxStep,
 stepBestFS(N, MaxStep, ProblemState) :-
    getBestFS(State), !,
    assert(State),
-   %write("test: "), write(State), nl,
    checkCurrentStateBestFS(N, MaxStep, ProblemState, State).
 stepBestFS(_, _, false).
    % no next state --> fringe is empty
@@ -189,7 +188,6 @@ stepAStar(N, MaxStep, false) :- N >= MaxStep,
 stepAStar(N, MaxStep, ProblemState) :-
    getAStar(State), !,
    assert(State),
-   %write("test: "), write(State), nl,
    checkCurrentStateAStar(N, MaxStep, ProblemState, State).
 stepAStar(_, _, false).
    % no next state --> fringe is empty

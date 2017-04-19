@@ -2,14 +2,15 @@
 % Test       : 0/8/1/2/4/3/7/6/5
 % Test BFS   : 1/3/4/8/0/2/7/6/5
 % Test DFS   : 1/0/2/8/4/3/7/6/5
-% Test BestFS:
+% Test BestFS: 8/0/1/2/4/3/7/6/5
 % Test AStar :
 
 solve :- 
    use_module(library(heaps)),
    consult("8puzzle.pl"),
    %breadthFirstSearch(1/3/4/8/0/2/7/6/5, 1/2/3/8/0/4/7/6/5, 100).
-   depthFirstSearch(1/0/2/8/4/3/7/6/5, 1/2/3/8/0/4/7/6/5, 100).
+   %depthFirstSearch(1/0/2/8/4/3/7/6/5, 1/2/3/8/0/4/7/6/5, 100).
+   bestFirstSearch(8/0/1/2/4/3/7/6/5, 1/2/3/8/0/4/7/6/5, 100).
 
 % Breadth-first search
 breadthFirstSearch(StartPuzzle, GoalPuzzle, MaxStep) :-
@@ -107,6 +108,57 @@ addToFringeDFS([state(NextPuzzle, Puzzle, A, NoStep, Distance, X)|T], N) :-
    addToFringeDFS(T, N).   
 
 
+% Best-first search
+bestFirstSearch(StartPuzzle, GoalPuzzle, MaxStep) :-
+   initializeBestFS(StartPuzzle, GoalPuzzle),
+   stepBestFS(1, MaxStep, ProblemState),
+   printSolution(StartPuzzle, GoalPuzzle, ProblemState).
+
+initializeBestFS(StartPuzzle, GoalPuzzle) :-
+   % add the Start state to the fringe
+   empty_heap(Heap),
+   hBestFS(state(StartPuzzle, empty, [], 0, 0, Hvalue)),
+   Priority is Hvalue,	
+   add_to_heap(Heap, Priority, state(StartPuzzle, empty, [], 0, 0, Hvalue), Heap1),
+   b_setval(fringe, Heap1),
+   % add the Goal state
+   retractall(goalState(_)),
+   assert(goalState(GoalPuzzle)), 
+   retractall(state(_,_,_,_,_,_)).
+
+stepBestFS(N, MaxStep, false) :- N >= MaxStep, 
+   % too far away !!!
+   !.
+stepBestFS(N, MaxStep, ProblemState) :-
+   getBestFS(State), !,
+   assert(State),
+   checkCurrentStateBestFS(N, MaxStep, ProblemState, State).
+stepBestFS(_, _, false).
+   % no next state --> fringe is empty
+
+checkCurrentStateBestFS(_, _, true, State) :-
+   checkGoal(State, true).
+checkCurrentStateBestFS(N, MaxStep, ProblemState, State) :-
+   extend(State, NextStateList),
+   addToFringeBestFS(NextStateList, N),
+   N1 is N + 1,
+   stepBestFS(N1, MaxStep, ProblemState).
+
+getBestFS(State) :-
+   b_getval(fringe, H),
+   get_from_heap(H, N, State, H1),
+   extract(State, NextP),
+   write("test: "), write(NextP), write(" - "), write(N) , nl,
+   b_setval(fringe, H1).
+
+addToFringeBestFS([], _).
+addToFringeBestFS([state(NextPuzzle, Puzzle, A, NoStep, Distance, _)|T], N) :-
+   b_getval(fringe, Heap),
+   hBestFS(state(NextPuzzle, Puzzle, A, NoStep, Distance, Hvalue)),
+   Priority is Hvalue,
+   add_to_heap(Heap, Priority, state(NextPuzzle, Puzzle, A, NoStep, Distance, Hvalue), Heap1),
+   b_setval(fringe, Heap1),
+   addToFringeBestFS(T, N).
 
 
 
@@ -128,11 +180,11 @@ printSolution(Start, Goal, ProblemState) :-
    write("Cost: "),
    state(Goal, _, _, _, Cost, _),
    write(Cost), write(" - Path: "),
-   printSolution1(Start, Goal, ProblemState), nl.
-printSolution1(Start, Start, _) :-
+   print(Start, Goal, ProblemState), nl.
+print(Start, Start, _) :-
    write("- "), write(Start).
-printSolution1(Start, Puzzle, ProblemState) :-
+print(Start, Puzzle, ProblemState) :-
    state(Puzzle, ParentPuzzle, _, _, _, _),
-   printSolution1(Start, ParentPuzzle, ProblemState),
+   print(Start, ParentPuzzle, ProblemState),
    write(" - "), write(Puzzle).
 
