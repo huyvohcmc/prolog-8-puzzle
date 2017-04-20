@@ -1,16 +1,20 @@
 % State = state(NextPuzzle, CurrentPuzzle, Ancestor, NoStep, Cost, H)
-% Test       : 0/8/1/2/4/3/7/6/5
-% Test BFS   : 1/3/4/8/0/2/7/6/5
-% Test DFS   : 1/0/2/8/4/3/7/6/5
-% Test BestFS: 8/0/1/2/4/3/7/6/5
-% Test AStar :
+
+% Test:
+% 0/8/1/2/4/3/7/6/5 (BFS)
+% 1/3/4/8/0/2/7/6/5 (DFS)
+% 1/0/2/8/4/3/7/6/5 (BestFS)
+% 8/2/1/7/5/3/0/6/4 (A*)
+
+% Heuristic functions: h1,total Manhattan distance, and h2, number of misplaced tiles.
 
 solve :- 
    use_module(library(heaps)),
    consult("8puzzle.pl"),
-   %breadthFirstSearch(1/3/4/8/0/2/7/6/5, 1/2/3/8/0/4/7/6/5, 100).
-   %depthFirstSearch(1/0/2/8/4/3/7/6/5, 1/2/3/8/0/4/7/6/5, 100).
-   bestFirstSearch(8/0/1/2/4/3/7/6/5, 1/2/3/8/0/4/7/6/5, 100).
+   %breadthFirstSearch(8/2/1/7/5/3/0/6/4, 1/2/3/8/0/4/7/6/5, 2000).
+   %depthFirstSearch(1/3/4/8/0/2/7/6/5, 1/2/3/8/0/4/7/6/5, 1000).
+   %bestFirstSearch(8/2/1/7/5/3/0/6/4, 1/2/3/8/0/4/7/6/5, 6000).
+   aStar(8/2/1/7/5/3/0/6/4, 1/2/3/8/0/4/7/6/5, 200).
 
 % Breadth-first search
 breadthFirstSearch(StartPuzzle, GoalPuzzle, MaxStep) :-
@@ -117,7 +121,7 @@ bestFirstSearch(StartPuzzle, GoalPuzzle, MaxStep) :-
 initializeBestFS(StartPuzzle, GoalPuzzle) :-
    % add the Start state to the fringe
    empty_heap(Heap),
-   hBestFS(state(StartPuzzle, empty, [], 0, 0, Hvalue)),
+   h(state(StartPuzzle, empty, [], 0, 0, Hvalue)),
    Priority is Hvalue,	
    add_to_heap(Heap, Priority, state(StartPuzzle, empty, [], 0, 0, Hvalue), Heap1),
    b_setval(fringe, Heap1),
@@ -154,11 +158,64 @@ getBestFS(State) :-
 addToFringeBestFS([], _).
 addToFringeBestFS([state(NextPuzzle, Puzzle, A, NoStep, Distance, _)|T], N) :-
    b_getval(fringe, Heap),
-   hBestFS(state(NextPuzzle, Puzzle, A, NoStep, Distance, Hvalue)),
+   h(state(NextPuzzle, Puzzle, A, NoStep, Distance, Hvalue)),
    Priority is Hvalue,
    add_to_heap(Heap, Priority, state(NextPuzzle, Puzzle, A, NoStep, Distance, Hvalue), Heap1),
    b_setval(fringe, Heap1),
    addToFringeBestFS(T, N).
+   
+
+% A*   
+aStar(StartPuzzle, GoalPuzzle, MaxStep) :-
+   initializeAStar(StartPuzzle, GoalPuzzle),
+   stepAStar(1, MaxStep, ProblemState),
+   printSolution(StartPuzzle, GoalPuzzle, ProblemState).
+
+initializeAStar(StartPuzzle, GoalPuzzle) :-
+   % add the Start state to the fringe
+   empty_heap(Heap),
+   h(state(StartPuzzle, empty, [], 0, 0, Hvalue)),
+   Priority is 0 + Hvalue,	% cost is 0
+   add_to_heap(Heap, Priority, state(StartPuzzle, empty, [], 0, 0, Hvalue), Heap1),
+   b_setval(fringe, Heap1),
+   % add the Goal state
+   retractall(goalState(_)),
+   assert(goalState(GoalPuzzle)), 
+   retractall(state(_,_,_,_,_,_)).
+
+stepAStar(N, MaxStep, false) :- N >= MaxStep, 
+   % too far away !!!
+   !.
+stepAStar(N, MaxStep, ProblemState) :-
+   getAStar(State), !,
+   assert(State),
+   checkCurrentStateAStar(N, MaxStep, ProblemState, State).
+stepAStar(_, _, false).
+   % no next state --> fringe is empty
+
+checkCurrentStateAStar(_, _, true, State) :-
+   checkGoal(State, true).
+checkCurrentStateAStar(N, MaxStep, ProblemState, State) :-
+   extend(State, NextStateList),
+   addToFringeAStar(NextStateList, N),
+   N1 is N + 1,
+   stepAStar(N1, MaxStep, ProblemState).
+
+getAStar(State) :-
+   b_getval(fringe, H),
+   get_from_heap(H, N, State, H1),
+   extract(State, NextP),
+   write("test: "), write(NextP), write(" - "), write(N) , nl,
+   b_setval(fringe, H1).
+
+addToFringeAStar([], _).
+addToFringeAStar([state(NextPuzzle, Puzzle, A, NoStep, Distance, _)|T], N) :-
+   b_getval(fringe, Heap),
+   h(state(NextPuzzle, Puzzle, A, NoStep, Distance, Hvalue)),
+   Priority is Distance + Hvalue,
+   add_to_heap(Heap, Priority, state(NextPuzzle, Puzzle, A, NoStep, Distance, Hvalue), Heap1),
+   b_setval(fringe, Heap1),
+   addToFringeAStar(T, N).
 
 
 

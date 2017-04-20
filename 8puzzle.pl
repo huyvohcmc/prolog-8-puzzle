@@ -29,10 +29,10 @@ linkOneWay( 0/B/C/D/E/F/H/I/J , D/B/C/0/E/F/H/I/J , 1).
 linkOneWay( A/0/C/D/E/F/H/I/J , A/E/C/D/0/F/H/I/J , 1).
 linkOneWay( A/B/0/D/E/F/H/I/J , A/B/F/D/E/0/H/I/J , 1).
 
-hBestFS(state(P,_,_,_,_,Hvalue)) :- h1(P, Hvalue).
 
-h1(Puzz, P) :- manhattan(Puzz, P).
-h2(Puzz, P) :- misplaced_tiles(Puzz, P).
+h(state(P,_,_,_,_,Hvalue)) :- h2(state(P,_,_,_,_,Hvalue)).
+h1(state(P,_,_,_,_,Hvalue)) :- manhattan(P, Hvalue).
+h2(state(P,_,_,_,_,Hvalue)) :- misplaced_tiles(P, Hvalue).
 
 manhattan(A/B/C/D/E/F/G/H/I, P) :-
     a(A,Pa), b(B,Pb), c(C,Pc),
