@@ -1,2 +1,2 @@
 # 8-puzzles
-Solving 8 puzzles problem in Prolog
+Solving 8 puzzle problem in Prolog
